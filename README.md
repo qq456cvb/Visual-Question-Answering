@@ -1,40 +1,40 @@
 # Visual-Question-Answering
 
-<!-- README refined by Cursor -->
+A PyTorch implementation of the **Spatial Memory Network (SMN)** from [Ask, Attend and Answer: Exploring Question-Guided Spatial Attention for Visual Question Answering (ECCV 2016)](https://link.springer.com/chapter/10.1007/978-3-319-46478-7_28) by Xu and Saenko, in a single notebook (`VQA.ipynb`).
 
-Deep Learning solving VQA with Pytorch
+## Model
 
-## Overview
+The SMN treats the spatial grid of CNN features as a memory that the question attends over:
 
-This repository contains Jupyter Notebook code from an older research, course, or prototype project. The README has been refreshed to make the repository easier to scan while preserving the original notes below.
+- **Image memory** — a frozen, pretrained **ResNet-152** truncated before the last pooling stage yields a 14×14 grid of visual features (L = 196 memory slots).
+- **Question encoding** — word embeddings fed through both an LSTM (for per-word vectors used in attention) and a learned bag-of-words pooling (for the sentence vector).
+- **Word-guided attention (hop 1)** — each word is correlated against every memory slot; the per-slot maximum over words is softmaxed into a spatial attention map, which pools an "evidence" embedding of the image. The attended visual feature plus the question vector gives the first-hop output.
+- **Second hop** — the hop-1 output queries the memory again to refine the attention before the final softmax classifier over the answer vocabulary. Both one-hop and two-hop variants are implemented (set `hop` when constructing `SMN`).
 
-## Repository Contents
+Answering is framed as classification over single-word answers with a negative log-likelihood loss.
 
-- Top-level source files and project assets.
+## Data
 
-## Setup
+The notebook supports two datasets, selected by the `dataset` flag in the configuration cell:
 
-- This legacy repo does not pin a full environment. Start from the language/toolchain implied by the source files, then install missing packages as reported by the runtime.
+- **DAQUAR** — expects the train/val question-answer text files and images under `./datasets/DAQUAR/`.
+- **VQA (v1, MS-COCO)** — expects the official annotation/question JSONs and images under `./datasets/VQA/`; the answer vocabulary is restricted to the top 1000 training answers, as in the paper.
 
-## Usage
+Set `preprocess = True` on the first run to build the question/answer tensors and vocabulary mappings.
 
-- open the notebooks: `VQA.ipynb`
+## Running
 
-## Data and Artifacts
+Open `VQA.ipynb` and run the cells top to bottom. Configuration (CUDA, dataset, epochs, checkpoint resume) lives in one flag cell near the top; checkpoints are written to `./model/` and per-epoch losses/accuracy to `log_<dataset>.txt`. The last cells visualize a validation sample together with its learned attention map.
 
-No new large artifact is stored in this repository. If a dataset or checkpoint is required, follow the links and notes in the original section below.
+Note this is an early-PyTorch, Python 2 era notebook (`print` statements, `xrange`, `autograd.Variable`); expect to modernize it for current PyTorch versions.
 
-## Status
+## Reference
 
-This is a `Batch B` cleanup pass for a legacy repository. Commands may require dependency/version adjustments on a modern machine.
-
-## License
-
-No explicit license file was found in this checkout; check the original project context before reusing code.
-
-## Original Notes
-
-# Visual-Question-Answering
-Deep Learning solving VQA with Pytorch
-
-Implementing "Ask, Attend and Answer: Exploring Question-Guided Spatial Attention for Visual Question Answering"
+```bibtex
+@inproceedings{xu2016ask,
+  title={Ask, Attend and Answer: Exploring Question-Guided Spatial Attention for Visual Question Answering},
+  author={Xu, Huijuan and Saenko, Kate},
+  booktitle={Proceedings of the European Conference on Computer Vision (ECCV)},
+  year={2016}
+}
+```
